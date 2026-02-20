@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Corners Model — P&L</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --bg-hover: #1c2128;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #6366f1;
+      --green: #4ade80;
+      --red: #f87171;
+      --blue: #93c5fd;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; }
+
+    header {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.6rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+    header .sub { color: var(--text-muted); font-size: .82rem; margin-left: auto; }
+    #last-updated { color: var(--text-muted); font-size: .78rem; }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: .85rem;
+      padding: 1.2rem 1.6rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .9rem 1.1rem;
+    }
+    .stat-card .label {
+      font-size: .68rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .05em; margin-bottom: .3rem;
+    }
+    .stat-card .value { font-size: 1.45rem; font-weight: 700; }
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .neu { color: var(--text); }
+
+    .section { padding: 0 1.6rem 1rem; }
+    .section h2 { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .7rem; }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1rem;
+      padding: 0 1.6rem 1rem;
+    }
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding: 0 1.6rem 1.5rem;
+    }
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+    }
+    .chart-card h2 { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .8rem; }
+    .chart-wrap { position: relative; height: 240px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    th {
+      background: var(--bg-hover); color: var(--text-muted);
+      font-weight: 600; text-align: left;
+      padding: .45rem .7rem; font-size: .68rem;
+      text-transform: uppercase; letter-spacing: .04em;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: .42rem .7rem; border-bottom: 1px solid var(--border); }
+    tr:hover td { background: var(--bg-hover); }
+
+    .badge {
+      display: inline-block; padding: .12rem .42rem;
+      border-radius: 4px; font-size: .68rem; font-weight: 700;
+    }
+    .badge-win  { background: #14532d; color: var(--green); }
+    .badge-loss { background: #450a0a; color: var(--red); }
+    .badge-push { background: #1e3a5f; color: var(--blue); }
+    .badge-tbd  { background: #1f2937; color: var(--text-muted); }
+
+    .pnl-pos { color: var(--green); font-weight: 600; }
+    .pnl-neg { color: var(--red); font-weight: 600; }
+
+    .state-msg {
+      text-align: center; padding: 4rem 1rem;
+      color: var(--text-muted); font-size: .95rem;
+    }
+    .error { color: var(--red); }
+
+    footer {
+      text-align: center; padding: 1.5rem;
+      color: var(--text-muted); font-size: .75rem;
+      border-top: 1px solid var(--border); margin-top: 1rem;
+    }
+
+    @media (max-width: 700px) {
+      .charts-row, .bottom-row { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-wrap { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚽ Corners Model</h1>
+  <span class="sub">Corner kicks · Bet tracker · Live results</span>
+  <span id="last-updated"></span>
+</header>
+
+<div id="state-msg" class="state-msg">Loading results…</div>
+
+<div id="content" style="display:none">
+
+  <div class="summary-grid">
+    <div class="stat-card"><div class="label">Total P&L</div><div class="value" id="s-pnl">—</div></div>
+    <div class="stat-card"><div class="label">ROI</div><div class="value" id="s-roi">—</div></div>
+    <div class="stat-card"><div class="label">Win Rate</div><div class="value neu" id="s-wr">—</div></div>
+    <div class="stat-card"><div class="label">Settled</div><div class="value neu" id="s-settled">—</div></div>
+    <div class="stat-card"><div class="label">W / L / P</div><div class="value neu" id="s-wlp">—</div></div>
+    <div class="stat-card"><div class="label">Pending</div><div class="value neu" id="s-pending">—</div></div>
+    <div class="stat-card"><div class="label">Avg Odds</div><div class="value neu" id="s-odds">—</div></div>
+  </div>
+
+  <!-- Recent bets -->
+  <div class="section">
+    <h2>Recent Bets</h2>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;overflow:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Match</th>
+            <th>League</th>
+            <th>Bet</th>
+            <th>Odds</th>
+            <th>Stake</th>
+            <th>Result</th>
+            <th>P&L</th>
+          </tr>
+        </thead>
+        <tbody id="bets-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <h2>Cumulative P&L (units)</h2>
+      <div class="chart-wrap"><canvas id="chart-cumulative"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>Monthly P&L</h2>
+      <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="chart-card">
+      <h2>By League</h2>
+      <div class="chart-wrap"><canvas id="chart-league"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h2>By Bet Type</h2>
+      <div class="chart-wrap"><canvas id="chart-bet"></canvas></div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<footer>Updated live from bet tracker · Model: Yip NB corner regression</footer>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const SHEET_ID = '15UFPvftm50rytwAVO4IMePf8nrNb0NZHOu1fkygx2xQ';
+const SHEET_GID = '662536645';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+
+// ── CSV parser ───────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i + 1];
+    if (inQ) {
+      if (c === '"' && n === '"') { field += '"'; i++; }
+      else if (c === '"') inQ = false;
+      else field += c;
+    } else {
+      if (c === '"') { inQ = true; }
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n' || (c === '\r' && n === '\n')) {
+        row.push(field); rows.push(row); row = []; field = '';
+        if (c === '\r') i++;
+      } else field += c;
+    }
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+// ── Parse bets ───────────────────────────────────────────────────────────────
+function parseBets(rows) {
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => h.trim());
+  const col = name => headers.indexOf(name);
+
+  const iDate = col('Date'), iTime = col('Time GMT'), iCountry = col('Country');
+  const iLeague = col('League'), iMatch = col('Match'), iBet = col('Bet');
+  const iStake = col('Stake'), iOdds = col('Odds'), iResult = col('Result');
+  const iCO = col('CO'), iCLV = col('CLV'), iMonth = col('Month'), iBookie = col('Bookie');
+  const iTipster = col('Tipster');
+
+  const bets = [];
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row.length || !row.some(c => c.trim())) continue;
+    const tipster = (row[iTipster] || '').trim();
+    if (!tipster || tipster === 'Tipster') continue;
+
+    const dateRaw = (row[iDate] || '').trim();
+    let dateISO = dateRaw;
+    const dm = dateRaw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (dm) dateISO = `${dm[3]}-${dm[2]}-${dm[1]}`;
+
+    const odds = parseFloat(row[iOdds]) || 0;
+    const stake = parseFloat(row[iStake]) || 1;
+    const result = (row[iResult] || '').trim();
+    const resLow = result.toLowerCase();
+
+    let pnl = 0, settled = false;
+    if (resLow === 'win' || resLow === 'w') { pnl = +(stake * (odds - 1)).toFixed(4); settled = true; }
+    else if (resLow === 'loss' || resLow === 'l' || resLow === 'lose') { pnl = +(-stake).toFixed(4); settled = true; }
+    else if (resLow === 'push' || resLow === 'p' || resLow === 'void' || resLow === 'r') { pnl = 0; settled = true; }
+
+    const co = (row[iCO] || '').replace('%', '');
+    const edge = parseFloat(co) / 100 || 0;
+
+    bets.push({
+      date: dateISO, time: (row[iTime] || '').trim(),
+      country: (row[iCountry] || '').trim(), league: (row[iLeague] || '').trim(),
+      match: (row[iMatch] || '').trim(), bet: (row[iBet] || '').trim(),
+      stake, odds, result, pnl, settled, edge,
+      month: (row[iMonth] || '').trim(), bookie: (row[iBookie] || '').trim(),
+    });
+  }
+  return bets;
+}
+
+// ── Compute stats ────────────────────────────────────────────────────────────
+function compute(bets) {
+  const settled = bets.filter(b => b.settled);
+  const wins = settled.filter(b => ['win','w'].includes(b.result.toLowerCase()));
+  const losses = settled.filter(b => ['loss','l','lose'].includes(b.result.toLowerCase()));
+  const pushes = settled.filter(b => ['push','p','void','r'].includes(b.result.toLowerCase()));
+  const pending = bets.filter(b => !b.settled);
+  const totalPnl = settled.reduce((s, b) => s + b.pnl, 0);
+  const totalStaked = settled.reduce((s, b) => s + b.stake, 0);
+
+  const sorted = [...settled].sort((a, b) => a.date.localeCompare(b.date));
+  let running = 0;
+  const cumulative = sorted.map(b => { running += b.pnl; return { date: b.date, pnl: b.pnl, cumulative: +running.toFixed(4), match: b.match }; });
+
+  const monthly = {};
+  settled.forEach(b => {
+    const m = b.month || b.date.slice(0,7);
+    if (!monthly[m]) monthly[m] = { pnl: 0, bets: 0, wins: 0 };
+    monthly[m].pnl += b.pnl; monthly[m].bets++;
+    if (['win','w'].includes(b.result.toLowerCase())) monthly[m].wins++;
+  });
+  const monthlyList = Object.entries(monthly).sort(([a],[b]) => a.localeCompare(b))
+    .map(([k,v]) => ({ month: k, pnl: +v.pnl.toFixed(4), bets: v.bets, win_rate: v.bets ? +(v.wins/v.bets).toFixed(4) : 0 }));
+
+  const byLeague = {};
+  settled.forEach(b => {
+    const k = b.league || b.country;
+    if (!byLeague[k]) byLeague[k] = { pnl: 0, bets: 0, wins: 0 };
+    byLeague[k].pnl += b.pnl; byLeague[k].bets++;
+    if (['win','w'].includes(b.result.toLowerCase())) byLeague[k].wins++;
+  });
+  const leagueList = Object.entries(byLeague)
+    .map(([k,v]) => ({ league: k, pnl: +v.pnl.toFixed(4), bets: v.bets, win_rate: v.bets ? +(v.wins/v.bets).toFixed(4) : 0 }))
+    .sort((a,b) => b.bets - a.bets).slice(0,12);
+
+  const byBet = {};
+  settled.forEach(b => {
+    if (!byBet[b.bet]) byBet[b.bet] = { pnl: 0, bets: 0, wins: 0 };
+    byBet[b.bet].pnl += b.pnl; byBet[b.bet].bets++;
+    if (['win','w'].includes(b.result.toLowerCase())) byBet[b.bet].wins++;
+  });
+  const betList = Object.entries(byBet)
+    .map(([k,v]) => ({ bet: k, pnl: +v.pnl.toFixed(4), bets: v.bets, win_rate: v.bets ? +(v.wins/v.bets).toFixed(4) : 0 }))
+    .sort((a,b) => b.bets - a.bets).slice(0,10);
+
+  return {
+    summary: {
+      total_bets: bets.length, settled_bets: settled.length,
+      wins: wins.length, losses: losses.length, pushes: pushes.length, pending: pending.length,
+      win_rate: settled.length ? +(wins.length/settled.length).toFixed(4) : 0,
+      total_pnl: +totalPnl.toFixed(4),
+      roi: totalStaked > 0 ? +(totalPnl/totalStaked).toFixed(4) : 0,
+      avg_odds: settled.length ? +(settled.reduce((s,b)=>s+b.odds,0)/settled.length).toFixed(4) : 0,
+    },
+    cumulative, monthly: monthlyList, by_league: leagueList, by_bet: betList,
+    recent_bets: [...bets].sort((a,b) => b.date.localeCompare(a.date)).slice(0,50),
+  };
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+let charts = [];
+function pct(v) { return (v*100).toFixed(1)+'%'; }
+function units(v) { return (v>=0?'+':'')+v.toFixed(2)+'u'; }
+function signCls(v) { return v>0?'pos':v<0?'neg':'neu'; }
+
+const GRID = '#2d3748', TICK = '#6b7280';
+const baseScale = { ticks:{color:TICK,font:{size:10}}, grid:{color:GRID} };
+
+function render(data) {
+  const s = data.summary;
+  const set = (id, val, cls) => { const el=document.getElementById(id); el.textContent=val; if(cls) el.className='value '+cls; };
+  set('s-pnl', units(s.total_pnl), signCls(s.total_pnl));
+  set('s-roi', pct(s.roi), signCls(s.roi));
+  set('s-wr', pct(s.win_rate));
+  set('s-settled', s.settled_bets);
+  set('s-wlp', `${s.wins} / ${s.losses} / ${s.pushes}`);
+  set('s-pending', s.pending);
+  set('s-odds', s.avg_odds.toFixed(2));
+
+  charts.forEach(c => c.destroy()); charts = [];
+
+  // Cumulative P&L
+  const cumul = data.cumulative;
+  const finalVal = cumul.at(-1)?.cumulative ?? 0;
+  const lineColor = finalVal >= 0 ? '#4ade80' : '#f87171';
+  charts.push(new Chart('chart-cumulative', {
+    type:'line',
+    data:{ labels:cumul.map(d=>d.date), datasets:[{
+      data:cumul.map(d=>d.cumulative),
+      borderColor:lineColor, backgroundColor:lineColor+'22',
+      fill:true, tension:0.35,
+      pointRadius:cumul.length<80?3:0, pointHoverRadius:5, borderWidth:2,
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{
+        label:ctx=>units(ctx.parsed.y),
+        title:ctx=>cumul[ctx[0].dataIndex]?.match||ctx[0].label,
+      }}},
+      scales:{ x:baseScale, y:baseScale },
+    }
+  }));
+
+  // Monthly
+  const mon = data.monthly;
+  charts.push(new Chart('chart-monthly', {
+    type:'bar',
+    data:{ labels:mon.map(m=>m.month.replace(/(\w+) (\d{4})/,(_,mo,yr)=>mo.slice(0,3)+' \''+yr.slice(2))),
+      datasets:[{ data:mon.map(m=>m.pnl),
+        backgroundColor:mon.map(m=>m.pnl>=0?'#4ade80bb':'#f87171bb'), borderRadius:4 }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${units(ctx.parsed.y)} (${mon[ctx.dataIndex].bets} bets, ${pct(mon[ctx.dataIndex].win_rate)} WR)`}}},
+      scales:{x:baseScale,y:baseScale},
+    }
+  }));
+
+  // By League
+  const lg = data.by_league;
+  charts.push(new Chart('chart-league', {
+    type:'bar',
+    data:{ labels:lg.map(l=>l.league), datasets:[{ data:lg.map(l=>l.pnl),
+      backgroundColor:lg.map(l=>l.pnl>=0?'#4ade80bb':'#f87171bb'), borderRadius:4 }]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${units(ctx.parsed.x)} (${lg[ctx.dataIndex].bets} bets, ${pct(lg[ctx.dataIndex].win_rate)} WR)`}}},
+      scales:{x:baseScale, y:{ticks:{color:'#c9d1d9',font:{size:10}},grid:{color:GRID}}},
+    }
+  }));
+
+  // By Bet
+  const bt = data.by_bet;
+  charts.push(new Chart('chart-bet', {
+    type:'bar',
+    data:{ labels:bt.map(b=>b.bet), datasets:[{ data:bt.map(b=>b.pnl),
+      backgroundColor:bt.map(b=>b.pnl>=0?'#4ade80bb':'#f87171bb'), borderRadius:4 }]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${units(ctx.parsed.x)} (${bt[ctx.dataIndex].bets} bets, ${pct(bt[ctx.dataIndex].win_rate)} WR)`}}},
+      scales:{x:baseScale, y:{ticks:{color:'#c9d1d9',font:{size:10}},grid:{color:GRID}}},
+    }
+  }));
+
+  // Bets table
+  const tbody = document.getElementById('bets-tbody');
+  tbody.innerHTML = '';
+  for (const b of data.recent_bets) {
+    const res = b.result || 'TBD';
+    const rl = res.toLowerCase();
+    const bc = rl==='win'||rl==='w'?'badge-win':rl==='loss'||rl==='l'||rl==='lose'?'badge-loss':rl==='push'||rl==='p'||rl==='r'?'badge-push':'badge-tbd';
+    const pc = b.settled?(b.pnl>=0?'pnl-pos':'pnl-neg'):'';
+    const ps = b.settled?units(b.pnl):'—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${b.date}</td><td>${b.match}</td><td>${b.league}</td><td>${b.bet}</td><td>${b.odds.toFixed(2)}</td><td>${b.stake.toFixed(2)}u</td><td><span class="badge ${bc}">${res}</span></td><td class="${pc}">${ps}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  document.getElementById('state-msg').style.display = 'none';
+  document.getElementById('content').style.display = '';
+}
+
+// ── Load ─────────────────────────────────────────────────────────────────────
+async function load() {
+  try {
+    const resp = await fetch(CSV_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    const bets = parseBets(rows);
+    const data = compute(bets);
+    render(data);
+  } catch (e) {
+    const el = document.getElementById('state-msg');
+    el.textContent = 'Failed to load: ' + e.message;
+    el.classList.add('error');
+  }
+}
+
+load();
+</script>
+</body>
+</html>
