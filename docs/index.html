@@ -28,9 +28,18 @@
       padding: 1rem 1.6rem;
       background: var(--bg-card);
       border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
     }
     header h1 { font-size: 1.25rem; font-weight: 700; }
-    header .sub { color: var(--text-muted); font-size: .82rem; margin-left: auto; }
+    header .sub { color: var(--text-muted); font-size: .82rem; }
+    .header-links { display: flex; gap: .8rem; margin-left: auto; }
+    .header-links a {
+      display: flex; align-items: center; gap: .35rem;
+      color: var(--text-muted); text-decoration: none; font-size: .82rem;
+      padding: .3rem .7rem; border: 1px solid var(--border);
+      border-radius: 6px; transition: color .15s, border-color .15s;
+    }
+    .header-links a:hover { color: var(--text); border-color: var(--text-muted); }
     #last-updated { color: var(--text-muted); font-size: .78rem; }
 
     .summary-grid {
@@ -124,7 +133,17 @@
 
 <header>
   <h1>⚽ Corners Model</h1>
-  <span class="sub">Bet tracker</span>
+  <span class="sub">Statistical corner kick predictions · results tracked live</span>
+  <div class="header-links">
+    <a href="https://x.com/BetsOnFlags" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      @BetsOnFlags
+    </a>
+    <a href="https://t.me/BetsOnFlags" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 14.26l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.299z"/></svg>
+      Telegram
+    </a>
+  </div>
   <span id="last-updated"></span>
 </header>
 
@@ -176,16 +195,6 @@
     </div>
   </div>
 
-  <div class="bottom-row">
-    <div class="chart-card">
-      <h2>By League</h2>
-      <div class="chart-wrap"><canvas id="chart-league"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h2>By Bet Type</h2>
-      <div class="chart-wrap"><canvas id="chart-bet"></canvas></div>
-    </div>
-  </div>
 
 </div><!-- /content -->
 
@@ -382,32 +391,6 @@ function render(data) {
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${units(ctx.parsed.y)} (${mon[ctx.dataIndex].bets} bets, ${pct(mon[ctx.dataIndex].win_rate)} WR)`}}},
       scales:{x:baseScale,y:baseScale},
-    }
-  }));
-
-  // By League
-  const lg = data.by_league;
-  charts.push(new Chart('chart-league', {
-    type:'bar',
-    data:{ labels:lg.map(l=>l.league), datasets:[{ data:lg.map(l=>l.pnl),
-      backgroundColor:lg.map(l=>l.pnl>=0?'#4ade80bb':'#f87171bb'), borderRadius:4 }]},
-    options:{
-      indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${units(ctx.parsed.x)} (${lg[ctx.dataIndex].bets} bets, ${pct(lg[ctx.dataIndex].win_rate)} WR)`}}},
-      scales:{x:baseScale, y:{ticks:{color:'#c9d1d9',font:{size:10}},grid:{color:GRID}}},
-    }
-  }));
-
-  // By Bet
-  const bt = data.by_bet;
-  charts.push(new Chart('chart-bet', {
-    type:'bar',
-    data:{ labels:bt.map(b=>b.bet), datasets:[{ data:bt.map(b=>b.pnl),
-      backgroundColor:bt.map(b=>b.pnl>=0?'#4ade80bb':'#f87171bb'), borderRadius:4 }]},
-    options:{
-      indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${units(ctx.parsed.x)} (${bt[ctx.dataIndex].bets} bets, ${pct(bt[ctx.dataIndex].win_rate)} WR)`}}},
-      scales:{x:baseScale, y:{ticks:{color:'#c9d1d9',font:{size:10}},grid:{color:GRID}}},
     }
   }));
 
