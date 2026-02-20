@@ -23,75 +23,75 @@
 
     body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; }
 
+    /* ── Header ── */
     header {
-      display: flex; align-items: center; gap: 1rem;
-      padding: 1rem 1.6rem;
+      display: flex; align-items: center; gap: .8rem;
+      padding: .9rem 1.2rem;
       background: var(--bg-card);
       border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
     }
-    header h1 { font-size: 1.25rem; font-weight: 700; }
-    header .sub { color: var(--text-muted); font-size: .82rem; }
-    .header-links { display: flex; gap: .8rem; margin-left: auto; }
+    header h1 { font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
+    header .sub { color: var(--text-muted); font-size: .78rem; }
+    .header-links { display: flex; gap: .6rem; margin-left: auto; }
     .header-links a {
-      display: flex; align-items: center; gap: .35rem;
-      color: var(--text-muted); text-decoration: none; font-size: .82rem;
-      padding: .3rem .7rem; border: 1px solid var(--border);
+      display: flex; align-items: center; gap: .3rem;
+      color: var(--text-muted); text-decoration: none; font-size: .8rem;
+      padding: .35rem .7rem; border: 1px solid var(--border);
       border-radius: 6px; transition: color .15s, border-color .15s;
+      white-space: nowrap;
     }
     .header-links a:hover { color: var(--text); border-color: var(--text-muted); }
-    #last-updated { color: var(--text-muted); font-size: .78rem; }
+    #last-updated { color: var(--text-muted); font-size: .72rem; white-space: nowrap; }
 
+    /* ── Summary cards ── */
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: .85rem;
-      padding: 1.2rem 1.6rem;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: .75rem;
+      padding: 1rem 1.2rem;
     }
     .stat-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: .9rem 1.1rem;
+      padding: .8rem 1rem;
     }
     .stat-card .label {
-      font-size: .68rem; color: var(--text-muted);
+      font-size: .65rem; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: .05em; margin-bottom: .3rem;
     }
-    .stat-card .value { font-size: 1.45rem; font-weight: 700; }
+    .stat-card .value { font-size: 1.35rem; font-weight: 700; }
     .pos { color: var(--green); }
     .neg { color: var(--red); }
     .neu { color: var(--text); }
 
-    .section { padding: 0 1.6rem 1rem; }
-    .section h2 { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .7rem; }
+    /* ── Section labels ── */
+    .section { padding: 0 1.2rem 1rem; }
+    .section h2 { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .6rem; }
 
+    /* ── Charts ── */
     .charts-row {
       display: grid;
       grid-template-columns: 2fr 1fr;
-      gap: 1rem;
-      padding: 0 1.6rem 1rem;
-    }
-    .bottom-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      padding: 0 1.6rem 1.5rem;
+      gap: .85rem;
+      padding: 0 1.2rem 1rem;
     }
     .chart-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 1rem 1.2rem;
+      padding: .9rem 1rem;
+      min-width: 0;
     }
-    .chart-card h2 { font-size: .78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .8rem; }
-    .chart-wrap { position: relative; height: 240px; }
+    .chart-card h2 { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .7rem; }
+    .chart-wrap { position: relative; height: 220px; overflow: hidden; min-width: 0; }
 
+    /* ── Table ── */
     table { width: 100%; border-collapse: collapse; font-size: .8rem; }
     th {
       background: var(--bg-hover); color: var(--text-muted);
       font-weight: 600; text-align: left;
-      padding: .45rem .7rem; font-size: .68rem;
+      padding: .45rem .7rem; font-size: .65rem;
       text-transform: uppercase; letter-spacing: .04em;
       border-bottom: 1px solid var(--border);
     }
@@ -110,22 +110,31 @@
     .pnl-pos { color: var(--green); font-weight: 600; }
     .pnl-neg { color: var(--red); font-weight: 600; }
 
-    .state-msg {
-      text-align: center; padding: 4rem 1rem;
-      color: var(--text-muted); font-size: .95rem;
-    }
+    .state-msg { text-align: center; padding: 4rem 1rem; color: var(--text-muted); font-size: .95rem; }
     .error { color: var(--red); }
+    footer { border-top: 1px solid var(--border); margin-top: 1rem; }
 
-    footer {
-      text-align: center; padding: 1.5rem;
-      color: var(--text-muted); font-size: .75rem;
-      border-top: 1px solid var(--border); margin-top: 1rem;
-    }
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      header { padding: .75rem 1rem; gap: .6rem; }
+      header .sub { display: none; }
+      #last-updated { display: none; }
+      .header-links a span { display: none; } /* icon only */
+      .header-links a { padding: .4rem .5rem; }
 
-    @media (max-width: 700px) {
-      .charts-row, .bottom-row { grid-template-columns: 1fr; }
-      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; padding: .85rem 1rem; }
+      .stat-card { padding: .7rem .85rem; }
+      .stat-card .value { font-size: 1.2rem; }
+
+      .section { padding: 0 1rem .85rem; }
+
+      .charts-row { grid-template-columns: 1fr; padding: 0 1rem .85rem; }
       .chart-wrap { height: 200px; }
+
+      /* Hide less important table columns on mobile */
+      .col-league, .col-stake { display: none; }
+
+      td, th { padding: .38rem .5rem; font-size: .75rem; }
     }
   </style>
 </head>
@@ -137,11 +146,11 @@
   <div class="header-links">
     <a href="https://x.com/BetsOnFlags" target="_blank" rel="noopener">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-      @BetsOnFlags
+      <span>@BetsOnFlags</span>
     </a>
     <a href="https://t.me/BetsOnFlags" target="_blank" rel="noopener">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 14.26l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.299z"/></svg>
-      Telegram
+      <span>Telegram</span>
     </a>
   </div>
   <span id="last-updated"></span>
@@ -170,10 +179,10 @@
           <tr>
             <th>Date</th>
             <th>Match</th>
-            <th>League</th>
+            <th class="col-league">League</th>
             <th>Bet</th>
             <th>Odds</th>
-            <th>Stake</th>
+            <th class="col-stake">Stake</th>
             <th>Result</th>
             <th>P&L</th>
           </tr>
@@ -343,6 +352,7 @@ function units(v) { return (v>=0?'+':'')+v.toFixed(2)+'u'; }
 function signCls(v) { return v>0?'pos':v<0?'neg':'neu'; }
 
 const GRID = '#2d3748', TICK = '#6b7280';
+const baseOpts = { responsive:true, maintainAspectRatio:false, resizeDelay:50 };
 const baseScale = { ticks:{color:TICK,font:{size:10}}, grid:{color:GRID} };
 
 function render(data) {
@@ -371,7 +381,7 @@ function render(data) {
       pointRadius:cumul.length<80?3:0, pointHoverRadius:5, borderWidth:2,
     }]},
     options:{
-      responsive:true, maintainAspectRatio:false,
+      ...baseOpts,
       plugins:{ legend:{display:false}, tooltip:{callbacks:{
         label:ctx=>units(ctx.parsed.y),
         title:ctx=>cumul[ctx[0].dataIndex]?.match||ctx[0].label,
@@ -388,7 +398,7 @@ function render(data) {
       datasets:[{ data:mon.map(m=>m.pnl),
         backgroundColor:mon.map(m=>m.pnl>=0?'#4ade80bb':'#f87171bb'), borderRadius:4 }]},
     options:{
-      responsive:true, maintainAspectRatio:false,
+      ...baseOpts,
       plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${units(ctx.parsed.y)} (${mon[ctx.dataIndex].bets} bets, ${pct(mon[ctx.dataIndex].win_rate)} WR)`}}},
       scales:{x:baseScale,y:baseScale},
     }
@@ -404,7 +414,7 @@ function render(data) {
     const pc = b.settled?(b.pnl>=0?'pnl-pos':'pnl-neg'):'';
     const ps = b.settled?units(b.pnl):'—';
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${b.date}</td><td>${b.match}</td><td>${b.league}</td><td>${b.bet}</td><td>${b.odds.toFixed(2)}</td><td>${b.stake.toFixed(2)}u</td><td><span class="badge ${bc}">${res}</span></td><td class="${pc}">${ps}</td>`;
+    tr.innerHTML = `<td>${b.date}</td><td>${b.match}</td><td class="col-league">${b.league}</td><td>${b.bet}</td><td>${b.odds.toFixed(2)}</td><td class="col-stake">${b.stake.toFixed(2)}u</td><td><span class="badge ${bc}">${res}</span></td><td class="${pc}">${ps}</td>`;
     tbody.appendChild(tr);
   }
 
